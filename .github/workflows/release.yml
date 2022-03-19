@@ -14,7 +14,7 @@ jobs:
     - name: Set up Go 1.x
       uses: actions/setup-go@v2
       with:
-        go-version: ^1.16
+        go-version: ^1.17
       id: go
 
     - name: Check out code into the Go module directory
@@ -53,16 +53,19 @@ jobs:
        go get github.com/wealdtech/xgo
 
     - name: Cross-compile linux
-      run: xgo -v -x -ldflags="-X github.com/wealdtech/graphd/cmd.ReleaseVersion=${RELEASE_VERSION}" --targets="linux/amd64" github.com/wealdtech/graphd
+      run: |
+        # xgo -v -x -ldflags="-X github.com/wealdtech/graphd/cmd.ReleaseVersion=${RELEASE_VERSION}" --targets="linux/amd64,linux/arm64" github.com/wealdtech/graphd
+        xgo -v -x -ldflags="-X github.com/wealdtech/graphd/cmd.ReleaseVersion=${RELEASE_VERSION}" --targets="linux/amd64" github.com/wealdtech/graphd
 
-    - name: Cross-compile Windows
-      run: xgo -v -x -ldflags="-X github.com/wealdtech/graphd/cmd.ReleaseVersion=${RELEASE_VERSION} -s -w -extldflags -static" --targets="windows/amd64" github.com/wealdtech/graphd
+    - name: Cross-compile windows
+      run: |
+       xgo -v -x -ldflags="-X github.com/wealdtech/graphd/cmd.ReleaseVersion=${RELEASE_VERSION} -s -w -extldflags -static" --targets="windows/amd64" github.com/wealdtech/graphd
 
     - name: Create windows zip file
       run: |
        mv graphd-windows-4.0-amd64.exe graphd.exe
        zip --junk-paths graphd-${RELEASE_VERSION}-windows-exe.zip graphd.exe
-       sha256sum graphd-${RELEASE_VERSION}-windows-exe.zip >graphd-${RELEASE_VERSION}-windows-exe.zip.sha256
+       sha256sum graphd-${RELEASE_VERSION}-windows-exe.zip >graphd-${RELEASE_VERSION}-windows.zip.sha256
 
     - name: Create linux AMD64 tgz file
       run: |
@@ -94,8 +97,8 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
         upload_url: ${{ steps.create_release.outputs.upload_url }}
-        asset_path: ./graphd-${{ env.RELEASE_VERSION }}-windows-exe.zip.sha256
-        asset_name: graphd-${{ env.RELEASE_VERSION }}-windows-exe.zip.sha256
+        asset_path: ./graphd-${{ env.RELEASE_VERSION }}-windows.zip.sha256
+        asset_name: graphd-${{ env.RELEASE_VERSION }}-windows.zip.sha256
         asset_content_type: text/plain
 
     - name: Upload windows zip file
@@ -140,7 +143,7 @@ jobs:
           #     upload_url: ${{ steps.create_release.outputs.upload_url }}
           #     asset_path: ./graphd-${{ env.RELEASE_VERSION }}-linux-arm64.tar.gz.sha256
           #     asset_name: graphd-${{ env.RELEASE_VERSION }}-linux-arm64.tar.gz.sha256
-          #     asset_content_type: application/gzip
+          #     asset_content_type: text/plain
 
           # - name: Upload linux ARM64 tgz file
           #   id: upload-release-asset-linux-arm64
